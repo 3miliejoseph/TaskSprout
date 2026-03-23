@@ -228,13 +228,24 @@ function renderMemos(){
     title.addEventListener('blur',()=>{ m.name=title.textContent.trim()||m.name;title.textContent=m.name;title.contentEditable=false;saveMemos(memos); });
     title.addEventListener('keydown',e=>{ if(e.key==='Enter'){e.preventDefault();title.blur();}if(e.key==='Escape'){title.textContent=m.name;title.blur();} });
 
+    const header=document.createElement('div'); header.className='memo-header';
+    const del=document.createElement('button'); del.className='memo-del'; del.textContent='×';
+    del.addEventListener('click',()=>{ memos.splice(idx,1); saveMemos(memos); renderMemos(); });
+    header.append(title,del);
+
     const meta=document.createElement('div'); meta.className='memo-meta';
     meta.textContent=m.timestamp+' · '+m.dur;
 
-    const del=document.createElement('button'); del.className='memo-del'; del.textContent='×';
-    del.addEventListener('click',()=>{ memos.splice(idx,1); saveMemos(memos); renderMemos(); });
+    card.append(header,meta);
 
-    card.append(title,meta,del);
+    // audio playback if blob URL exists (in-session only)
+    if(m.blobUrl){
+      const audio=document.createElement('audio');
+      audio.className='memo-audio';
+      audio.controls=true;
+      audio.src=m.blobUrl;
+      card.append(audio);
+    }
 
     if(m.generating){
       const gen=document.createElement('div'); gen.className='memo-generating';
