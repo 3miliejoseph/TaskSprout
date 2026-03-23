@@ -1,0 +1,6 @@
+{
+  "rewrites": [
+    { "source": "/api/generate-title", "destination": "/api/generate-title" },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}
