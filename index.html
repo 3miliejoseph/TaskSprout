@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>TaskSprout</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,400;1,400;1,500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css"/>
+</head>
+<body>
+
+  <!-- ── LANDING ─────────────────────────────────────────────────── -->
+  <div class="screen active" id="screen-landing">
+    <div class="landing">
+      <div class="bg-c1"></div>
+      <div class="bg-c2"></div>
+      <h1 class="l-title">TaskSprout</h1>
+      <p class="l-tag">Grow your day, one task at a time</p>
+      <canvas id="land-c" width="200" height="210"></canvas>
+      <button class="l-btn" id="btn-start">Start day</button>
+    </div>
+  </div>
+
+  <!-- ── MAIN APP ────────────────────────────────────────────────── -->
+  <div class="screen" id="screen-app">
+    <div class="app">
+
+      <aside class="left">
+        <div class="date-card">
+          <div class="d-day" id="day-name">Sunday</div>
+          <div class="d-num" id="day-num">22</div>
+          <div class="d-month" id="month-str">March 2026</div>
+        </div>
+
+        <div class="sec-label">Voice memos</div>
+
+        <button class="rec-btn" id="rec-btn">
+          <div class="rec-dot"></div>
+          <span class="rec-label" id="rec-label">Record</span>
+        </button>
+        <div class="rec-timer" id="rec-timer">00:00</div>
+
+        <div class="memos-list" id="memos-list">
+          <div class="memo-empty">No memos yet</div>
+        </div>
+      </aside>
+
+      <main class="right">
+        <div class="prog-wrap">
+          <div class="prog-card" id="prog-card">
+            <div class="prog-label">Today's tasks</div>
+            <div class="prog-track" id="prog-track">
+              <div class="prog-fill" id="prog-fill" style="width:0%"></div>
+            </div>
+            <div class="prog-row">
+              <span class="prog-count" id="prog-count">0 of 0 complete</span>
+              <span class="prog-pct" id="prog-pct">0%</span>
+            </div>
+          </div>
+        </div>
+
+        <ul class="task-list" id="task-list">
+          <li class="task-empty">Nothing here yet</li>
+        </ul>
+
+        <div class="bottom-row">
+          <input class="task-input" id="task-inp" placeholder="Write a task…" maxlength="120"/>
+          <button class="btn-add" id="btn-add">+</button>
+          <button class="btn-end" id="btn-end">End day</button>
+        </div>
+      </main>
+
+    </div>
+  </div>
+
+  <!-- ── REWARD ──────────────────────────────────────────────────── -->
+  <div class="screen" id="screen-reward">
+    <div class="reward">
+      <div class="bg-c1"></div>
+      <div class="bg-c2"></div>
+      <canvas id="bloom-c" width="220" height="250"></canvas>
+      <h2 class="reward-title" id="reward-title">Day complete!</h2>
+      <p class="reward-msg" id="reward-msg">You completed everything — full bloom!</p>
+      <button class="btn-new-day" id="btn-new-day">Start a new day</button>
+    </div>
+  </div>
+
+  <script src="plant.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
