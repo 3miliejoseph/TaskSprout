@@ -56,9 +56,17 @@ if (lastDate !== todayStr) {
 function showScreen(name){
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   $('screen-'+name).classList.add('active');
-  if(name === 'landing'){ startLandingIdle(); stopBloom(); }
-  else if(name === 'reward'){ stopLanding(); startBloom(); }
-  else { stopLanding(); stopBloom(); }
+  if(name === 'landing'){
+    stopLanding(); // Always reset before starting
+    setTimeout(startLandingIdle, 0); // Force restart animation
+    stopBloom();
+  }
+  else if(name === 'reward'){
+    stopLanding(); startBloom();
+  }
+  else {
+    stopLanding(); stopBloom();
+  }
 }
 
 $('btn-start').addEventListener('click', () => {
@@ -75,6 +83,7 @@ $('btn-start').addEventListener('click', () => {
     renderMemos();
     updateProgress();
   }
+  // Always show main app screen
   showScreen('app');
 });
 $('btn-end').addEventListener('click',   () => showScreen('reward'));
