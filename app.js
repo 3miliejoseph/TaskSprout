@@ -42,6 +42,9 @@ $('btn-start').addEventListener('click', () => showScreen('app'));
 $('btn-end').addEventListener('click',   () => showScreen('reward'));
 $('btn-new-day').addEventListener('click', () => {
   todos = []; saveTodos(todos); renderTasks(); updateProgress();
+  // revoke any blob URLs to free memory
+  memos.forEach(m => { if(m.blobUrl) URL.revokeObjectURL(m.blobUrl); });
+  memos = []; saveMemos(memos); renderMemos();
   showScreen('app');
 });
 
@@ -81,12 +84,15 @@ function updateProgress(){
 function triggerCompleteAnimation(){
   const card  = $('prog-card');
   const track = $('prog-track');
+  const taskList = $('task-list');
+
   $('prog-pct').style.color   = '#3a5a3e';
   $('prog-count').style.color = '#5c7d61';
   card.style.borderColor = '#a8c5aa';
   card.style.background  = '#ddeedd';
   setTimeout(()=>{ card.style.background='#e8ede5'; }, 1200);
 
+  // ripple rings on progress bar
   for(let i=0;i<3;i++){
     setTimeout(()=>{
       const ring=document.createElement('div'); ring.className='ring-pulse';
@@ -96,7 +102,9 @@ function triggerCompleteAnimation(){
     }, i*200);
   }
 
-  const colors=['#d4c4d8','#c8dbc9','#e8d4c0','#d8c4c8','#c4d4c0','#e0d0c4'];
+  const colors=['#d4c4d8','#c8dbc9','#e8d4c0','#d8c4c8','#c4d4c0','#e0d0c4','#ddb0b8','#c8dbc9'];
+
+  // petals on progress card
   for(let i=0;i<18;i++){
     setTimeout(()=>{
       const p=document.createElement('div'); p.className='petal-particle';
@@ -111,6 +119,33 @@ function triggerCompleteAnimation(){
       card.appendChild(p);
       setTimeout(()=>p.remove(),(dur+delay)*1000+200);
     }, i*60);
+  }
+
+  // petals raining down over the task list — more of them, slower
+  taskList.style.position = 'relative';
+  for(let i=0;i<28;i++){
+    setTimeout(()=>{
+      const p=document.createElement('div'); p.className='petal-particle';
+      const mx=(Math.random()-.5)*50,fx=(Math.random()-.5)*80,ex=(Math.random()-.5)*60;
+      const mr=-40+Math.random()*100,fr=mr+(Math.random()-.5)*140,er=fr+(Math.random()-.5)*80;
+      const dur=2.8+Math.random()*2.5,delay=Math.random()*2.5,size=5+Math.random()*10;
+      // start from top, fall the full height of the list
+      p.style.cssText=`
+        width:${size}px;height:${size}px;
+        left:${3+Math.random()*94}%;
+        top:0px;
+        background:${colors[Math.floor(Math.random()*colors.length)]};
+        --mx:${mx}px;--mr:${mr}deg;--fx:${fx}px;--fr:${fr}deg;--ex:${ex}px;--er:${er}deg;
+        animation:task-petal-drift ${dur}s cubic-bezier(.2,.8,.3,1) ${delay}s forwards;
+        position:absolute;
+        pointer-events:none;
+        opacity:0;
+        border-radius:60% 40% 60% 40%;
+        z-index:10;
+      `;
+      taskList.appendChild(p);
+      setTimeout(()=>p.remove(),(dur+delay)*1000+200);
+    }, i*80);
   }
 }
 
@@ -238,13 +273,25 @@ function renderMemos(){
 
     card.append(header,meta);
 
-    // audio playback if blob URL exists (in-session only)
+    // audio playback + vertical volume slider if blob URL exists
     if(m.blobUrl){
+      const wrap=document.createElement('div'); wrap.className='memo-audio-wrap';
+
       const audio=document.createElement('audio');
       audio.className='memo-audio';
       audio.controls=true;
       audio.src=m.blobUrl;
-      card.append(audio);
+
+      const volWrap=document.createElement('div'); volWrap.className='memo-volume-wrap';
+      const volIcon=document.createElement('div'); volIcon.className='memo-volume-icon'; volIcon.textContent='♪';
+      const vol=document.createElement('input');
+      vol.type='range'; vol.className='memo-volume';
+      vol.min=0; vol.max=1; vol.step=0.05; vol.value=1;
+      vol.addEventListener('input',()=>{ audio.volume=parseFloat(vol.value); });
+
+      volWrap.append(volIcon, vol);
+      wrap.append(audio, volWrap);
+      card.append(wrap);
     }
 
     if(m.generating){
