@@ -273,24 +273,59 @@ function renderMemos(){
 
     card.append(header,meta);
 
-    // audio playback + vertical volume slider if blob URL exists
     if(m.blobUrl){
-      const wrap=document.createElement('div'); wrap.className='memo-audio-wrap';
+      const wrap = document.createElement('div'); wrap.className = 'memo-audio-wrap';
 
-      const audio=document.createElement('audio');
-      audio.className='memo-audio';
-      audio.controls=true;
-      audio.src=m.blobUrl;
+      const audio = document.createElement('audio');
+      audio.className = 'memo-audio';
+      audio.controls = true;
+      audio.src = m.blobUrl;
 
-      const volWrap=document.createElement('div'); volWrap.className='memo-volume-wrap';
-      const volIcon=document.createElement('div'); volIcon.className='memo-volume-icon'; volIcon.textContent='♪';
-      const vol=document.createElement('input');
-      vol.type='range'; vol.className='memo-volume';
-      vol.min=0; vol.max=1; vol.step=0.05; vol.value=1;
-      vol.addEventListener('input',()=>{ audio.volume=parseFloat(vol.value); });
+      // volume button with hover popup + click mute
+      const volBtn = document.createElement('button');
+      volBtn.className = 'memo-vol-btn';
+      volBtn.title = 'Click to mute/unmute';
 
-      volWrap.append(volIcon, vol);
-      wrap.append(audio, volWrap);
+      // speaker icon SVG element — update in place
+      const iconSvgOn  = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 010 14.14M15.54 8.46a5 5 0 010 7.07"/></svg>`;
+      const iconSvgOff = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>`;
+
+      const iconSpan = document.createElement('span');
+      iconSpan.innerHTML = iconSvgOn;
+
+      // hover popup with vertical slider
+      const popup = document.createElement('div'); popup.className = 'memo-vol-popup';
+      const slider = document.createElement('input');
+      slider.type = 'range'; slider.className = 'memo-vol-slider';
+      slider.min = 0; slider.max = 1; slider.step = 0.05; slider.value = 1;
+
+      let muted = false;
+
+      slider.addEventListener('input', (e) => {
+        e.stopPropagation();
+        const v = parseFloat(slider.value);
+        audio.volume = v;
+        if(v === 0){ muted = true; audio.muted = true; iconSpan.innerHTML = iconSvgOff; }
+        else       { muted = false; audio.muted = false; iconSpan.innerHTML = iconSvgOn; }
+      });
+
+      // click on button body (not slider) toggles mute
+      volBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        muted = !muted;
+        audio.muted = muted;
+        if(muted){
+          iconSpan.innerHTML = iconSvgOff;
+        } else {
+          iconSpan.innerHTML = iconSvgOn;
+          // restore slider position if it was at 0
+          if(parseFloat(slider.value) === 0){ slider.value = 0.8; audio.volume = 0.8; }
+        }
+      });
+
+      popup.appendChild(slider);
+      volBtn.append(iconSpan, popup);
+      wrap.append(audio, volBtn);
       card.append(wrap);
     }
 
