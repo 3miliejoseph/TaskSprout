@@ -20,6 +20,18 @@ function saveMemos(memos){
 }
 
 // ── State ──────────────────────────────────────────────────────────────────
+// ── Date persistence ─────────────────────────────────────────────
+function getTodayStr() {
+  const now = new Date();
+  return now.getFullYear() + '-' + (now.getMonth()+1).toString().padStart(2,'0') + '-' + now.getDate().toString().padStart(2,'0');
+}
+function loadLastDate() {
+  return localStorage.getItem('ts-last-date') || '';
+}
+function saveLastDate(dateStr) {
+  localStorage.setItem('ts-last-date', dateStr);
+}
+
 let todos   = loadTodos();
 let memos   = loadMemos();
 let tid     = todos.reduce((m,t) => Math.max(m, t.id+1), 1);
@@ -28,6 +40,17 @@ let wasComplete = false;
 let recording   = false, recSecs = 0, recInterval = null;
 let mediaRecorder = null, audioChunks = [];
 let landRaf = null, bloomRaf = null;
+
+// On load, check if new day
+const todayStr = getTodayStr();
+const lastDate = loadLastDate();
+if (lastDate !== todayStr) {
+  todos = [];
+  memos = [];
+  saveTodos(todos);
+  saveMemos(memos);
+  saveLastDate(todayStr);
+}
 
 // ── Screen nav ─────────────────────────────────────────────────────────────
 function showScreen(name){
@@ -38,7 +61,22 @@ function showScreen(name){
   else { stopLanding(); stopBloom(); }
 }
 
-$('btn-start').addEventListener('click', () => showScreen('app'));
+$('btn-start').addEventListener('click', () => {
+  // On start, check if new day
+  const todayStr = getTodayStr();
+  const lastDate = loadLastDate();
+  if (lastDate !== todayStr) {
+    todos = [];
+    memos = [];
+    saveTodos(todos);
+    saveMemos(memos);
+    saveLastDate(todayStr);
+    renderTasks();
+    renderMemos();
+    updateProgress();
+  }
+  showScreen('app');
+});
 $('btn-end').addEventListener('click',   () => showScreen('reward'));
 $('btn-new-day').addEventListener('click', () => {
   todos = []; saveTodos(todos); renderTasks(); updateProgress();
@@ -102,29 +140,32 @@ function triggerCompleteAnimation(){
     }, i*200);
   }
 
-  const colors=['#d4c4d8','#c8dbc9','#e8d4c0','#d8c4c8','#c4d4c0','#e0d0c4','#ddb0b8','#c8dbc9'];
+        // petals raining down over the task list — more of them, slower, and now fall all the way to the bottom
 
-  // petals on progress card
-  for(let i=0;i<18;i++){
-    setTimeout(()=>{
-      const p=document.createElement('div'); p.className='petal-particle';
-      const mx=(Math.random()-.5)*40,fx=(Math.random()-.5)*70,ex=(Math.random()-.5)*90;
-      const mr=-30+Math.random()*80,fr=mr+(Math.random()-.5)*120,er=fr+(Math.random()-.5)*60;
-      const dur=2.2+Math.random()*2,delay=Math.random()*1.2,size=5+Math.random()*9;
-      p.style.cssText=`width:${size}px;height:${size}px;left:${5+Math.random()*90}%;top:4px;
-        background:${colors[Math.floor(Math.random()*colors.length)]};
-        --mx:${mx}px;--mr:${mr}deg;--fx:${fx}px;--fr:${fr}deg;--ex:${ex}px;--er:${er}deg;
-        animation:petal-drift ${dur}s cubic-bezier(.25,.8,.3,1) ${delay}s forwards;
-        position:absolute;`;
-      card.appendChild(p);
-      setTimeout(()=>p.remove(),(dur+delay)*1000+200);
-    }, i*60);
-  }
-
-  // petals raining down over the task list — more of them, slower
-  taskList.style.position = 'relative';
+  const taskListRect = taskList.getBoundingClientRect();
+  const listHeight = taskListRect.height || 600;
   for(let i=0;i<28;i++){
     setTimeout(()=>{
+      const p=document.createElement('div'); p.className='petal-particle';
+      const mx=(Math.random()-.5)*50,fx=(Math.random()-.5)*80,ex=(Math.random()-.5)*60;
+      const mr=-40+Math.random()*100,fr=mr+(Math.random()-.5)*140,er=fr+(Math.random()-.5)*80;
+      const dur=2.8+Math.random()*2.5,delay=Math.random()*2.5,size=5+Math.random()*10;
+      // start from top, fall the full height of the list and beyond
+      p.style.cssText=`
+        width:${size}px;height:${size}px;
+        left:${3+Math.random()*94}%;
+        top:0px;
+        background:${colors[Math.floor(Math.random()*colors.length)]};
+        --mx:${mx}px;--mr:${mr}deg;--fx:${fx}px;--fr:${fr}deg;--ex:${ex}px;--er:${er}deg;
+        animation:task-petal-drift ${dur}s cubic-bezier(.2,.8,.3,1) ${delay}s forwards;
+        position:absolute;
+        pointer-events:none;
+        opacity:0;
+        min-height:${listHeight+120}px;`;
+      taskList.appendChild(p);
+      setTimeout(()=>p.remove(),(dur+delay)*1000+400);
+    }, i*60);
+  }
       const p=document.createElement('div'); p.className='petal-particle';
       const mx=(Math.random()-.5)*50,fx=(Math.random()-.5)*80,ex=(Math.random()-.5)*60;
       const mr=-40+Math.random()*100,fr=mr+(Math.random()-.5)*140,er=fr+(Math.random()-.5)*80;
@@ -248,55 +289,82 @@ async function generateMemoTitle(durationSecs,ts){
 function renderMemos(){
   const nl=$('memos-list'); nl.innerHTML='';
   if(!memos.length){ nl.innerHTML='<div class="memo-empty">No memos yet</div>'; return; }
-  memos.forEach((m,idx)=>{
-    const card=document.createElement('div'); card.className='memo-card';
+  memos.forEach((m, idx) => {
+    const card = document.createElement('div');
+    card.className = 'memo-card';
 
-    const title=document.createElement('div'); title.className='memo-title';
-    title.contentEditable=false; title.textContent=m.name;
-    let tap=null;
-    title.addEventListener('click',()=>{
-      if(tap){ clearTimeout(tap);tap=null;title.contentEditable=true;title.focus();
-        const r=document.createRange();r.selectNodeContents(title);
-        const s=window.getSelection();s.removeAllRanges();s.addRange(r);
-      } else tap=setTimeout(()=>{tap=null;},300);
+    // Header: Title (editable) and Delete button
+    const header = document.createElement('div');
+    header.className = 'memo-header';
+
+    const title = document.createElement('div');
+    title.className = 'memo-title';
+    title.contentEditable = false;
+    title.textContent = m.name;
+    let tap = null;
+    title.addEventListener('click', () => {
+      if (tap) {
+        clearTimeout(tap); tap = null; title.contentEditable = true; title.focus();
+        const r = document.createRange(); r.selectNodeContents(title);
+        const s = window.getSelection(); s.removeAllRanges(); s.addRange(r);
+      } else tap = setTimeout(() => { tap = null; }, 300);
     });
-    title.addEventListener('blur',()=>{ m.name=title.textContent.trim()||m.name;title.textContent=m.name;title.contentEditable=false;saveMemos(memos); });
-    title.addEventListener('keydown',e=>{ if(e.key==='Enter'){e.preventDefault();title.blur();}if(e.key==='Escape'){title.textContent=m.name;title.blur();} });
+    title.addEventListener('blur', () => {
+      m.name = title.textContent.trim() || m.name;
+      title.textContent = m.name;
+      title.contentEditable = false;
+      saveMemos(memos);
+    });
+    title.addEventListener('keydown', e => {
+      if (e.key === 'Enter') { e.preventDefault(); title.blur(); }
+      if (e.key === 'Escape') { title.textContent = m.name; title.blur(); }
+    });
 
-    const header=document.createElement('div'); header.className='memo-header';
-    const del=document.createElement('button'); del.className='memo-del'; del.textContent='×';
-    del.addEventListener('click',()=>{ memos.splice(idx,1); saveMemos(memos); renderMemos(); });
-    header.append(title,del);
+    const del = document.createElement('button');
+    del.className = 'memo-del';
+    del.title = 'Delete memo';
+    del.textContent = '×';
+    del.addEventListener('click', () => {
+      memos.splice(idx, 1); saveMemos(memos); renderMemos();
+    });
 
-    const meta=document.createElement('div'); meta.className='memo-meta';
-    meta.textContent=m.timestamp+' · '+m.dur;
+    header.append(title, del);
+    card.append(header);
 
-    card.append(header,meta);
+    // Meta info: timestamp and duration
+    const meta = document.createElement('div');
+    meta.className = 'memo-meta';
+    meta.textContent = m.timestamp + ' · ' + m.dur;
+    card.append(meta);
 
-    if(m.blobUrl){
-      const wrap = document.createElement('div'); wrap.className = 'memo-audio-wrap';
+    // Audio controls
+    if (m.blobUrl) {
+      const wrap = document.createElement('div');
+      wrap.className = 'memo-audio-wrap';
 
       const audio = document.createElement('audio');
       audio.className = 'memo-audio';
       audio.controls = true;
       audio.src = m.blobUrl;
 
-      // volume button with hover popup + click mute
+      // Volume button with hover popup + click mute
       const volBtn = document.createElement('button');
       volBtn.className = 'memo-vol-btn';
       volBtn.title = 'Click to mute/unmute';
 
-      // speaker icon SVG element — update in place
-      const iconSvgOn  = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 010 14.14M15.54 8.46a5 5 0 010 7.07"/></svg>`;
-      const iconSvgOff = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>`;
+      // Speaker icon SVG element — update in place
+      const iconSvgOn = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 010 14.14M15.54 8.46a5 5 0 010 7.07"/></svg>`;
+      const iconSvgOff = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>`;
 
       const iconSpan = document.createElement('span');
       iconSpan.innerHTML = iconSvgOn;
 
-      // hover popup with vertical slider
-      const popup = document.createElement('div'); popup.className = 'memo-vol-popup';
+      // Hover popup with vertical slider
+      const popup = document.createElement('div');
+      popup.className = 'memo-vol-popup';
       const slider = document.createElement('input');
-      slider.type = 'range'; slider.className = 'memo-vol-slider';
+      slider.type = 'range';
+      slider.className = 'memo-vol-slider';
       slider.min = 0; slider.max = 1; slider.step = 0.05; slider.value = 1;
 
       let muted = false;
@@ -305,21 +373,21 @@ function renderMemos(){
         e.stopPropagation();
         const v = parseFloat(slider.value);
         audio.volume = v;
-        if(v === 0){ muted = true; audio.muted = true; iconSpan.innerHTML = iconSvgOff; }
-        else       { muted = false; audio.muted = false; iconSpan.innerHTML = iconSvgOn; }
+        if (v === 0) { muted = true; audio.muted = true; iconSpan.innerHTML = iconSvgOff; }
+        else { muted = false; audio.muted = false; iconSpan.innerHTML = iconSvgOn; }
       });
 
-      // click on button body (not slider) toggles mute
+      // Click on button toggles mute
       volBtn.addEventListener('click', (e) => {
         e.stopPropagation();
         muted = !muted;
         audio.muted = muted;
-        if(muted){
+        if (muted) {
           iconSpan.innerHTML = iconSvgOff;
         } else {
           iconSpan.innerHTML = iconSvgOn;
-          // restore slider position if it was at 0
-          if(parseFloat(slider.value) === 0){ slider.value = 0.8; audio.volume = 0.8; }
+          // Restore slider position if it was at 0
+          if (parseFloat(slider.value) === 0) { slider.value = 0.8; audio.volume = 0.8; }
         }
       });
 
@@ -329,9 +397,12 @@ function renderMemos(){
       card.append(wrap);
     }
 
-    if(m.generating){
-      const gen=document.createElement('div'); gen.className='memo-generating';
-      gen.textContent='generating title…'; card.append(gen);
+    // Generating title indicator
+    if (m.generating) {
+      const gen = document.createElement('div');
+      gen.className = 'memo-generating';
+      gen.textContent = 'generating title…';
+      card.append(gen);
     }
 
     nl.appendChild(card);
