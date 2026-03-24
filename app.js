@@ -485,7 +485,27 @@ function startBloom(){
 function stopBloom(){ if(bloomRaf){cancelAnimationFrame(bloomRaf);bloomRaf=null;} }
 
 // ── Boot ───────────────────────────────────────────────────────────────────
-renderTasks();
-renderMemos();
-updateProgress();
-showScreen('landing');
+function bootApp() {
+  renderTasks();
+  renderMemos();
+  updateProgress();
+  showScreen('landing');
+}
+
+// Wait for plant.js globals before starting landing animation
+if (window.LEAF_DEFS && window.drawRanunculus) {
+  bootApp();
+} else {
+  let tries = 0;
+  (function waitForPlant() {
+    if (window.LEAF_DEFS && window.drawRanunculus) {
+      bootApp();
+    } else if (++tries < 40) {
+      setTimeout(waitForPlant, 50);
+    } else {
+      // fallback: still boot, but warn
+      console.warn('plant.js not loaded, flower may not render');
+      bootApp();
+    }
+  })();
+}
