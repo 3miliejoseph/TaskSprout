@@ -20,7 +20,6 @@
   --font-display: 'Playfair Display', Georgia, serif;
   --font-body:  'Nunito', sans-serif;
   --sidebar-w: clamp(180px, 22vw, 270px);
-  --landing-max-width: 540px;
 }
 
 html, body {
@@ -40,42 +39,39 @@ html, body {
 .landing {
   flex: 1; display: flex; flex-direction: column;
   align-items: center; justify-content: center;
-  padding: clamp(32px,7vh,80px) 48px clamp(40px,7vh,90px);
+  padding: clamp(24px,5vh,52px) 32px clamp(28px,5vh,56px);
   position: relative; overflow: hidden;
-  max-width: var(--landing-max-width);
-  margin: 0 auto;
 }
 .bg-c1 { position:absolute;top:-60px;right:-60px;width:240px;height:240px;border-radius:50%;background:#c8dbc9;opacity:.22;pointer-events:none; }
 .bg-c2 { position:absolute;bottom:-80px;left:-60px;width:280px;height:280px;border-radius:50%;background:#b5ccb6;opacity:.16;pointer-events:none; }
 
 /* Title uses same Nunito font as the day name */
-# Main landing title and tagline bigger on large screens
 .l-title {
   font-family: var(--font-display);
   font-style: normal;
-  font-size: clamp(44px, 7vw, 92px);
-  font-weight: 600;
+  font-size: clamp(36px, 6vw, 68px);
+  font-weight: 500;
   color: #2d4a30;
   text-align: center;
-  line-height: 1.08;
-  margin-bottom: 18px;
+  line-height: 1;
+  margin-bottom: 10px;
 }
 .l-tag {
-  font-size: clamp(20px, 2vw, 28px);
+  font-size: clamp(16px, 1.4vw, 19px);
   font-weight: 500; color: var(--text3);
-  text-align: center; margin-bottom: 22px;
+  text-align: center; margin-bottom: 14px;
 }
 #land-c { display: block; }
 .l-btn {
-  margin-top: 32px;
-  padding: clamp(16px,2vh,24px) clamp(38px,5vw,80px);
-  border-radius: 16px; border: 2px solid #8aaa8c;
+  margin-top: 20px;
+  padding: clamp(10px,1.5vh,14px) clamp(28px,4vw,52px);
+  border-radius: 12px; border: 1.5px solid #8aaa8c;
   background: var(--date-card); color: #2d4a30;
   font-family: var(--font-body);
-  font-size: clamp(18px,2vw,28px); font-weight: 800;
+  font-size: clamp(12px,1.3vw,15px); font-weight: 700;
   cursor: pointer; transition: all .2s;
 }
-.l-btn:hover { background: #a4bda6; transform: translateY(-2px) scale(1.04); }
+.l-btn:hover { background: #a4bda6; transform: translateY(-2px); }
 
 /* ── App ─────────────────────────────────────────────────────────── */
 .app { display: flex; height: 100vh; }
@@ -398,14 +394,8 @@ html, body {
   .d-num { font-size:32px; }
 }
 @media (min-width:1600px) {
-  :root { --sidebar-w:320px; --landing-max-width: 700px; }
-  .l-title { font-size: 6vw; }
-  .l-tag { font-size: 2.5vw; }
-  .l-btn { font-size: 2vw; padding: 28px 100px; }
+  :root { --sidebar-w:290px; }
 }
 @media (min-width:2000px) {
-  :root { --sidebar-w:370px; --landing-max-width: 900px; }
-  .l-title { font-size: 5vw; }
-  .l-tag { font-size: 2vw; }
-  .l-btn { font-size: 1.7vw; padding: 36px 140px; }
+  :root { --sidebar-w:320px; }
 }
