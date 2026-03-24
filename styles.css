@@ -138,7 +138,7 @@ html, body {
 .memo-card:hover .memo-del { opacity:1; }
 .memo-del:hover { color:var(--blush); }
 .memo-meta { font-size:clamp(9px,0.9vw,11px); color:var(--sage); font-weight:600; margin-top:2px; }
-.memo-generating { font-size:clamp(9px,0.9vw,10.5px); color:var(--text4); font-style:italic; margin-top:2px; }
+.memo-generating { font-size:clamp(9px,0.9vw,10.5px); color:var(--text4); font-style: normal; margin-top:2px; }
 
 /* audio player */
 .memo-audio-wrap {
@@ -315,7 +315,7 @@ html, body {
   padding:32px; gap:clamp(8px,1.5vh,14px);
   position:relative; overflow:hidden; background:var(--bg);
 }
-.reward-title { font-family:var(--font-display); font-style:italic; font-size:clamp(18px,3vw,30px); color:#2d4a30; text-align:center; }
+.reward-title { font-family:var(--font-display); font-style: normal; font-size:clamp(18px,3vw,30px); color:#2d4a30; text-align:center; }
 .reward-msg { font-size:clamp(11px,1.3vw,14px); font-weight:500; color:var(--text3); text-align:center; }
 .btn-new-day {
   margin-top:8px; padding:clamp(9px,1.5vh,14px) clamp(20px,3vw,38px);
