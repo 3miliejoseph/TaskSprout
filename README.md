@@ -22,7 +22,7 @@ npm start
 
 ## Features
 
-- **Landing page** — soft swaying flower greets you each day
+- **Landing page** — Pink flower greets you each day
 - **Tasks** — add, check off, and delete tasks; live progress bar with a petal animation at 100%
 - **Voice memos** — record notes; AI generates a title from the time of day and duration (double-tap to rename)
 - **Day reward** — animated plant grows proportionally to % of tasks completed; full ranunculus bloom at 100%
