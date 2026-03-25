@@ -219,7 +219,7 @@ function renderTasks() {
 function addTask() {
   const inp = $('task-inp'), text = inp.value.trim();
   if (!text) return;
-  todos.unshift({ id: tid++, text, done: false });
+  todos.push({ id: tid++, text, done: false });
   inp.value = ''; saveTodos(); renderTasks(); updateProgress();
 }
 $('btn-add').addEventListener('click', addTask);
