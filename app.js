@@ -1,3 +1,47 @@
+'use strict';
+
+// ── Themed Confirmation Modal ───────────────────────────────────────────────
+function themedConfirm(message) {
+  return new Promise(resolve => {
+    // Create modal background
+    const bg = document.createElement('div');
+    bg.className = 'tsprout-modal-bg';
+    // Modal box
+    const modal = document.createElement('div');
+    modal.className = 'tsprout-modal';
+    // Title/message
+    const title = document.createElement('div');
+    title.className = 'tsprout-modal-title';
+    title.textContent = message;
+    // Buttons
+    const btns = document.createElement('div');
+    btns.className = 'tsprout-modal-btns';
+    const yes = document.createElement('button');
+    yes.className = 'tsprout-modal-btn';
+    yes.textContent = 'Delete';
+    const no = document.createElement('button');
+    no.className = 'tsprout-modal-btn cancel';
+    no.textContent = 'Cancel';
+    btns.appendChild(yes);
+    btns.appendChild(no);
+    modal.appendChild(title);
+    modal.appendChild(btns);
+    bg.appendChild(modal);
+    document.body.appendChild(bg);
+    // Focus for accessibility
+    yes.focus();
+    // Handlers
+    function cleanup() {
+      document.body.removeChild(bg);
+    }
+    yes.onclick = () => { cleanup(); resolve(true); };
+    no.onclick = () => { cleanup(); resolve(false); };
+    bg.onclick = e => { if (e.target === bg) { cleanup(); resolve(false); } };
+    document.addEventListener('keydown', function esc(e) {
+      if (e.key === 'Escape') { cleanup(); resolve(false); document.removeEventListener('keydown', esc); }
+    });
+  });
+}
 
 'use strict';
 
@@ -207,9 +251,11 @@ function renderTasks() {
     li.querySelector('.check').onclick = () => { t.done = !t.done; saveTodos(); renderTasks(); updateProgress(); };
     li.querySelector('.task-del').onclick = () => { todos = todos.filter(x => x !== t); saveTodos(); renderTasks(); updateProgress(); };
         li.querySelector('.task-del').onclick = () => {
-          if (confirm('Are you sure you want to delete this task?')) {
-            todos = todos.filter(x => x !== t); saveTodos(); renderTasks(); updateProgress();
-          }
+          themedConfirm('Are you sure you want to delete this task?').then(yes => {
+            if (yes) {
+              todos = todos.filter(x => x !== t); saveTodos(); renderTasks(); updateProgress();
+            }
+          });
         };
     list.appendChild(li);
   });
@@ -544,10 +590,12 @@ function renderMemos() {
     del.className = 'memo-del'; del.textContent = '×'; del.title = 'Delete';
     del.style = 'font-size:22px; background:none; border:none; cursor:pointer; margin-left:0px; align-self:center;';
     del.addEventListener('click', () => {
-      if (confirm('Are you sure you want to delete this voice memo?')) {
-        if (window.api) window.api.memos.delete(m.id);
-        memos.splice(idx, 1); saveMemos(); renderMemos();
-      }
+      themedConfirm('Are you sure you want to delete this voice memo?').then(yes => {
+        if (yes) {
+          if (window.api) window.api.memos.delete(m.id);
+          memos.splice(idx, 1); saveMemos(); renderMemos();
+        }
+      });
     });
     row2.append(playBtn, progress, length, volBtn, del);
     // Keep audio element hidden in the card for playback
