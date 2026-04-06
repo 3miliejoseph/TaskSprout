@@ -689,22 +689,22 @@ input[type="range"] {
   }
 
   .memo-length {
-    font-size: 11px;
-    min-width: 32px;
+    display: none;
   }
 
   .memo-play {
     margin-right: 0px;
+    flex-shrink: 0;
   }
 
   .memo-progress {
-    width: 50px;
-    margin: 0 2px;
+    flex: 1;
+    min-width: 80px;
+    margin: 0 8px;
   }
 
   .memo-volume-btn {
-    width: 24px;
-    height: 24px;
+    display: none;
   }
 
   .memo-del {

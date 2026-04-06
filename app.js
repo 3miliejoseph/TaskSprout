@@ -419,8 +419,7 @@ function renderMemos() {
               audio.src = audioUrl;
               audio.load();
               audio.volume = 0.8;
-              // Ensure audio is in DOM before playing
-              if (!audio.parentNode) controls.appendChild(audio);
+              // Audio element will be in the card DOM
               try {
                 await audio.play();
               } catch (err) {
