@@ -40,6 +40,7 @@ let wasComplete = false;
 let recording   = false, recSecs = 0, recInterval = null;
 let mediaRecorder = null, audioChunks = [];
 let landRaf = null, bloomRaf = null;
+let memoVolumeOutsideBound = false;
 
 // On load, check if new day
 const todayStr = getTodayStr();
@@ -132,6 +133,7 @@ function triggerCompleteAnimation(){
   const card  = $('prog-card');
   const track = $('prog-track');
   const taskList = $('task-list');
+  const colors = ['#ddb0b8', '#d4a0a8', '#ca909a', '#c8dbc9', '#b5ccb6', '#a8c5aa'];
 
   $('prog-pct').style.color   = '#3a5a3e';
   $('prog-count').style.color = '#5c7d61';
@@ -149,8 +151,7 @@ function triggerCompleteAnimation(){
     }, i*200);
   }
 
-        // petals raining down over the task list — more of them, slower, and now fall all the way to the bottom
-
+  // Petals rain across the task list after full completion.
   const taskListRect = taskList.getBoundingClientRect();
   const listHeight = taskListRect.height || 600;
   for(let i=0;i<28;i++){
@@ -159,7 +160,6 @@ function triggerCompleteAnimation(){
       const mx=(Math.random()-.5)*50,fx=(Math.random()-.5)*80,ex=(Math.random()-.5)*60;
       const mr=-40+Math.random()*100,fr=mr+(Math.random()-.5)*140,er=fr+(Math.random()-.5)*80;
       const dur=2.8+Math.random()*2.5,delay=Math.random()*2.5,size=5+Math.random()*10;
-      // start from top, fall the full height of the list and beyond
       p.style.cssText=`
         width:${size}px;height:${size}px;
         left:${3+Math.random()*94}%;
@@ -170,32 +170,13 @@ function triggerCompleteAnimation(){
         position:absolute;
         pointer-events:none;
         opacity:0;
-        min-height:${listHeight+120}px;`;
-      taskList.appendChild(p);
-      setTimeout(()=>p.remove(),(dur+delay)*1000+400);
-    }, i*60);
-  }
-      const p=document.createElement('div'); p.className='petal-particle';
-      const mx=(Math.random()-.5)*50,fx=(Math.random()-.5)*80,ex=(Math.random()-.5)*60;
-      const mr=-40+Math.random()*100,fr=mr+(Math.random()-.5)*140,er=fr+(Math.random()-.5)*80;
-      const dur=2.8+Math.random()*2.5,delay=Math.random()*2.5,size=5+Math.random()*10;
-      // start from top, fall the full height of the list
-      p.style.cssText=`
-        width:${size}px;height:${size}px;
-        left:${3+Math.random()*94}%;
-        top:0px;
-        background:${colors[Math.floor(Math.random()*colors.length)]};
-        --mx:${mx}px;--mr:${mr}deg;--fx:${fx}px;--fr:${fr}deg;--ex:${ex}px;--er:${er}deg;
-        animation:task-petal-drift ${dur}s cubic-bezier(.2,.8,.3,1) ${delay}s forwards;
-        position:absolute;
-        pointer-events:none;
-        opacity:0;
+        min-height:${listHeight+120}px;
         border-radius:60% 40% 60% 40%;
         z-index:10;
       `;
       taskList.appendChild(p);
-      setTimeout(()=>p.remove(),(dur+delay)*1000+200);
-    }, i*80);
+      setTimeout(()=>p.remove(),(dur+delay)*1000+400);
+    }, i*60);
   }
 }
 
@@ -297,6 +278,15 @@ async function generateMemoTitle(durationSecs,ts){
 
 function renderMemos(){
   const nl=$('memos-list'); nl.innerHTML='';
+  const touchEditing = window.matchMedia('(hover: none), (pointer: coarse)').matches;
+
+  if(touchEditing && !memoVolumeOutsideBound){
+    document.addEventListener('click', () => {
+      document.querySelectorAll('.memo-vol-wrap.open').forEach(el => el.classList.remove('open'));
+    });
+    memoVolumeOutsideBound = true;
+  }
+
   if(!memos.length){ nl.innerHTML='<div class="memo-empty">No memos yet</div>'; return; }
   memos.forEach((m, idx) => {
     const card = document.createElement('div');
@@ -308,28 +298,74 @@ function renderMemos(){
 
     const title = document.createElement('div');
     title.className = 'memo-title';
-    title.contentEditable = false;
+    title.contentEditable = 'false';
     title.textContent = m.name;
-    let tap = null;
-    title.addEventListener('click', () => {
-      if (tap) {
-        clearTimeout(tap); tap = null; title.contentEditable = true; title.focus();
-        const r = document.createRange(); r.selectNodeContents(title);
-        const s = window.getSelection(); s.removeAllRanges(); s.addRange(r);
-      } else tap = setTimeout(() => { tap = null; }, 300);
-    });
-    title.addEventListener('blur', () => {
-      m.name = title.textContent.trim() || m.name;
-      title.textContent = m.name;
-      title.contentEditable = false;
-      saveMemos(memos);
-    });
+    let beforeEdit = m.name;
+
+    function startEditTitle(){
+      if(title.isContentEditable) return;
+      beforeEdit = m.name;
+      title.contentEditable = 'true';
+      title.classList.add('editing');
+      title.focus();
+      const r = document.createRange();
+      r.selectNodeContents(title);
+      const s = window.getSelection();
+      if(s){
+        s.removeAllRanges();
+        s.addRange(r);
+      }
+    }
+
+    function finishEditTitle(save){
+      if(!title.isContentEditable) return;
+      if(save){
+        const next = title.textContent.trim();
+        m.name = next || beforeEdit;
+        title.textContent = m.name;
+        saveMemos(memos);
+      } else {
+        title.textContent = beforeEdit;
+      }
+      title.contentEditable = 'false';
+      title.classList.remove('editing');
+    }
+
+    if(touchEditing){
+      title.addEventListener('click', startEditTitle);
+    } else {
+      title.addEventListener('dblclick', startEditTitle);
+    }
+
+    title.addEventListener('blur', () => finishEditTitle(true));
     title.addEventListener('keydown', e => {
-      if (e.key === 'Enter') { e.preventDefault(); title.blur(); }
-      if (e.key === 'Escape') { title.textContent = m.name; title.blur(); }
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        finishEditTitle(true);
+        title.blur();
+      }
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        finishEditTitle(false);
+        title.blur();
+      }
+    });
+
+    const actions = document.createElement('div');
+    actions.className = 'memo-actions';
+
+    const edit = document.createElement('button');
+    edit.type = 'button';
+    edit.className = 'memo-edit';
+    edit.title = 'Edit memo title';
+    edit.textContent = 'Edit';
+    edit.addEventListener('click', e => {
+      e.stopPropagation();
+      startEditTitle();
     });
 
     const del = document.createElement('button');
+    del.type = 'button';
     del.className = 'memo-del';
     del.title = 'Delete memo';
     del.textContent = '×';
@@ -337,7 +373,8 @@ function renderMemos(){
       memos.splice(idx, 1); saveMemos(memos); renderMemos();
     });
 
-    header.append(title, del);
+    actions.append(edit, del);
+    header.append(title, actions);
     card.append(header);
 
     // Meta info: timestamp and duration
@@ -356,10 +393,14 @@ function renderMemos(){
       audio.controls = true;
       audio.src = m.blobUrl;
 
-      // Volume button with hover popup + click mute
+      const volWrap = document.createElement('div');
+      volWrap.className = 'memo-vol-wrap';
+
+      // Volume button + popup controls
       const volBtn = document.createElement('button');
+      volBtn.type = 'button';
       volBtn.className = 'memo-vol-btn';
-      volBtn.title = 'Click to mute/unmute';
+      volBtn.title = touchEditing ? 'Adjust volume' : 'Click to mute/unmute';
 
       // Speaker icon SVG element — update in place
       const iconSvgOn = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 010 14.14M15.54 8.46a5 5 0 010 7.07"/></svg>`;
@@ -386,23 +427,31 @@ function renderMemos(){
         else { muted = false; audio.muted = false; iconSpan.innerHTML = iconSvgOn; }
       });
 
-      // Click on button toggles mute
-      volBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        muted = !muted;
-        audio.muted = muted;
-        if (muted) {
-          iconSpan.innerHTML = iconSvgOff;
-        } else {
-          iconSpan.innerHTML = iconSvgOn;
-          // Restore slider position if it was at 0
-          if (parseFloat(slider.value) === 0) { slider.value = 0.8; audio.volume = 0.8; }
-        }
-      });
+      if(touchEditing){
+        volWrap.addEventListener('click', e => e.stopPropagation());
+        volBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          volWrap.classList.toggle('open');
+        });
+      } else {
+        // Desktop keeps quick mute/unmute on click.
+        volBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          muted = !muted;
+          audio.muted = muted;
+          if (muted) {
+            iconSpan.innerHTML = iconSvgOff;
+          } else {
+            iconSpan.innerHTML = iconSvgOn;
+            if (parseFloat(slider.value) === 0) { slider.value = 0.8; audio.volume = 0.8; }
+          }
+        });
+      }
 
       popup.appendChild(slider);
-      volBtn.append(iconSpan, popup);
-      wrap.append(audio, volBtn);
+      volBtn.append(iconSpan);
+      volWrap.append(volBtn, popup);
+      wrap.append(audio, volWrap);
       card.append(wrap);
     }
 

@@ -141,6 +141,12 @@ html, body {
   justify-content: space-between;
   gap: 10px;
 }
+.memo-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
 .memo-title {
   font-size: clamp(15px,1.5vw,22px);
   font-weight: 700;
@@ -157,10 +163,34 @@ html, body {
   overflow: hidden;
   text-overflow: ellipsis;
 }
+.memo-title.editing {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+  cursor: text;
+}
 .memo-title:focus {
   background: var(--sage-pale);
   color: var(--text);
   text-overflow: clip;
+}
+.memo-edit {
+  background: var(--bg2);
+  border: 1.5px solid var(--border2);
+  color: var(--sage-dark);
+  font-size: 12px;
+  font-weight: 700;
+  border-radius: 999px;
+  min-width: 54px;
+  height: 32px;
+  padding: 0 10px;
+  cursor: pointer;
+  transition: background .15s, border-color .15s, color .15s;
+}
+.memo-edit:hover {
+  background: var(--sage-pale);
+  border-color: var(--sage-light);
+  color: var(--text);
 }
 .memo-del {
   background: var(--blush);
@@ -209,11 +239,15 @@ html, body {
   border-radius: 6px;
   background: var(--bg2);
 }
-.memo-vol-btn {
+.memo-vol-wrap {
   position: relative;
-  flex-shrink: 0;
   width: 32px;
   height: 32px;
+  flex-shrink: 0;
+}
+.memo-vol-btn {
+  width: 100%;
+  height: 100%;
   border: none;
   background: var(--bg2);
   color: var(--sage-dark);
@@ -248,7 +282,9 @@ html, body {
   z-index: 20;
   box-shadow: 0 2px 16px rgba(90,120,90,.13);
 }
-.memo-vol-btn:hover .memo-vol-popup,
+.memo-vol-wrap:hover .memo-vol-popup,
+.memo-vol-wrap:focus-within .memo-vol-popup,
+.memo-vol-wrap.open .memo-vol-popup,
 .memo-vol-popup:hover {
   opacity: 1;
   pointer-events: all;
@@ -389,9 +425,92 @@ html, body {
 .btn-new-day:hover { background:#a4bda6; transform:translateY(-1px); }
 
 /* ── Breakpoints ─────────────────────────────────────────────────── */
-@media (max-width:600px) {
-  :root { --sidebar-w:155px; }
-  .d-num { font-size:32px; }
+@media (max-width:980px) {
+  :root { --sidebar-w:210px; }
+}
+
+@media (max-width:780px) {
+  html, body { overflow: auto; }
+  .screen { height: 100dvh; min-height: 100dvh; }
+  .screen.active { display: block; overflow-y: auto; }
+
+  .app {
+    height: auto;
+    min-height: 100dvh;
+    flex-direction: column;
+  }
+
+  .left {
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+    padding: 14px 14px 10px;
+    gap: 10px;
+  }
+
+  .date-card {
+    padding: 12px;
+  }
+
+  .memos-list {
+    max-height: 220px;
+  }
+
+  .right {
+    min-height: 0;
+  }
+
+  .prog-wrap {
+    padding: 12px 14px 10px;
+  }
+
+  .task-list {
+    padding: 8px 14px;
+    max-height: 42vh;
+  }
+
+  .bottom-row {
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 10px 14px 14px;
+  }
+
+  .task-input {
+    flex: 1 1 calc(100% - 56px);
+    min-width: 0;
+  }
+
+  .btn-add {
+    width: 40px;
+    height: 40px;
+  }
+
+  .btn-end {
+    flex: 1 1 100%;
+    height: 40px;
+    padding: 0 12px;
+  }
+
+  .landing,
+  .reward {
+    padding: 20px 16px 24px;
+  }
+}
+
+@media (max-width:520px) {
+  :root { --sidebar-w:100%; }
+  .d-day { font-size: 18px; }
+  .d-num { font-size: 38px; }
+  .d-month { font-size: 10px; }
+  .l-title { font-size: clamp(34px, 11vw, 48px); }
+  .l-tag { font-size: 14px; }
+  .memo-title { font-size: 16px; }
+  .memo-actions { gap: 6px; }
+  .memo-edit { min-width: 48px; height: 34px; }
+  .memo-del { width: 34px; height: 34px; }
+  .memo-vol-wrap { width: 34px; height: 34px; }
+  .memo-audio-wrap { gap: 10px; }
+  .memo-audio { min-width: 0; width: 100%; }
 }
 @media (min-width:1600px) {
   :root { --sidebar-w:290px; }
