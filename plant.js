@@ -16,11 +16,11 @@ function bezierTan(p0,p1,p2,p3,t){ return 3*Math.pow(1-t,2)*(p1-p0)+6*(1-t)*t*(p
 window.PlantUtils = { easeInOutSine, easeInOutQuart, easeOutBack, clamp01 };
 
 function drawPot(ctx, cx, pr, bodyH=26, rimH=11) {
-  ctx.fillStyle='#c4a882'; ctx.beginPath(); ctx.roundRect(cx-24,pr+rimH,48,bodyH,4); ctx.fill();
-  ctx.fillStyle='#b8956e'; ctx.beginPath(); ctx.roundRect(cx-28,pr,56,rimH,3); ctx.fill();
-  ctx.fillStyle='rgba(0,0,0,0.07)'; ctx.beginPath(); ctx.roundRect(cx-11,pr+rimH,7,bodyH,2); ctx.fill();
-  ctx.fillStyle='#8a6040'; ctx.beginPath(); ctx.ellipse(cx,pr+2,22,4.5,0,0,Math.PI*2); ctx.fill();
-  ctx.fillStyle='#a07850'; ctx.beginPath(); ctx.ellipse(cx-3,pr+1,9,2.8,-0.2,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='#c4a882'; ctx.beginPath(); ctx.roundRect(cx-30,pr+rimH,60,bodyH,5); ctx.fill();
+  ctx.fillStyle='#b8956e'; ctx.beginPath(); ctx.roundRect(cx-35,pr,70,rimH,4); ctx.fill();
+  ctx.fillStyle='rgba(0,0,0,0.07)'; ctx.beginPath(); ctx.roundRect(cx-14,pr+rimH,10,bodyH,3); ctx.fill();
+  ctx.fillStyle='#8a6040'; ctx.beginPath(); ctx.ellipse(cx,pr+2,28,6,0,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='#a07850'; ctx.beginPath(); ctx.ellipse(cx-4,pr+1,12,3.5,-0.2,0,Math.PI*2); ctx.fill();
 }
 window.drawPot = drawPot;
 

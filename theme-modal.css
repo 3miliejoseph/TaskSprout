@@ -1,0 +1,62 @@
+/*
+Custom modal for delete confirmation, matching TaskSprout theme
+*/
+
+.tsprout-modal-bg {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(60,80,60,0.10);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.tsprout-modal {
+  background: var(--bg2);
+  border: 2px solid var(--sage-pale);
+  border-radius: 16px;
+  box-shadow: 0 4px 32px rgba(60,80,60,0.13);
+  padding: 32px 28px 22px 28px;
+  min-width: 320px;
+  max-width: 90vw;
+  color: var(--text);
+  font-family: var(--font-body);
+  text-align: center;
+  z-index: 1001;
+}
+.tsprout-modal-title {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 18px;
+  color: var(--sage-dark);
+}
+.tsprout-modal-btns {
+  display: flex;
+  gap: 18px;
+  justify-content: center;
+  margin-top: 18px;
+}
+.tsprout-modal-btn {
+  font-size: 16px;
+  font-family: var(--font-body);
+  padding: 7px 22px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  background: var(--sage-pale);
+  color: var(--sage-dark);
+  font-weight: 600;
+  transition: background 0.15s, color 0.15s;
+}
+.tsprout-modal-btn:hover {
+  background: var(--sage-dark);
+  color: #fff;
+}
+.tsprout-modal-btn.cancel {
+  background: var(--bg3);
+  color: var(--text3);
+}
+.tsprout-modal-btn.cancel:hover {
+  background: var(--sage);
+  color: #fff;
+}

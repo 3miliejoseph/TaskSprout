@@ -1,0 +1,14 @@
+{
+  "name": "tasksprout",
+  "version": "1.0.0",
+  "description": "A gentle productivity app — grow your day, one task at a time.",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "devDependencies": {
+    "electron": "^28.0.0"
+  },
+  "author": "TaskSprout",
+  "license": "MIT"
+}

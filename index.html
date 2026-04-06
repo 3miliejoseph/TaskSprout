@@ -7,6 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,400;1,400;1,500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css"/>
+  <link rel="stylesheet" href="theme-modal.css"/>
 </head>
 <body>
 
@@ -17,7 +18,7 @@
       <div class="bg-c2"></div>
       <h1 class="l-title">TaskSprout</h1>
       <p class="l-tag">Grow your day, one task at a time</p>
-      <canvas id="land-c" width="200" height="210"></canvas>
+      <canvas id="land-c" width="370" height="390"></canvas>
       <button class="l-btn" id="btn-start">Start day</button>
     </div>
   </div>
@@ -26,7 +27,8 @@
   <div class="screen" id="screen-app">
     <div class="app">
 
-      <aside class="left">
+      <!-- Left — date + voice memos -->
+      <aside class="left" style="-webkit-app-region:drag;">
         <div class="date-card">
           <div class="d-day" id="day-name">Sunday</div>
           <div class="d-num" id="day-num">22</div>
@@ -35,23 +37,23 @@
 
         <div class="sec-label">Voice memos</div>
 
-        <button class="rec-btn" id="rec-btn">
+        <button class="rec-btn" id="rec-btn" style="-webkit-app-region:no-drag;">
           <div class="rec-dot"></div>
           <span class="rec-label" id="rec-label">Record</span>
         </button>
         <div class="rec-timer" id="rec-timer">00:00</div>
 
-        <div class="memos-list" id="memos-list">
+        <div class="memos-list" id="memos-list" style="-webkit-app-region:no-drag;">
           <div class="memo-empty">No memos yet</div>
         </div>
-
       </aside>
 
+      <!-- Right — tasks -->
       <main class="right">
         <div class="prog-wrap">
-          <div class="prog-card" id="prog-card">
+          <div class="prog-card">
             <div class="prog-label">Today's tasks</div>
-            <div class="prog-track" id="prog-track">
+            <div class="prog-track">
               <div class="prog-fill" id="prog-fill" style="width:0%"></div>
             </div>
             <div class="prog-row">
@@ -80,7 +82,7 @@
     <div class="reward">
       <div class="bg-c1"></div>
       <div class="bg-c2"></div>
-      <canvas id="bloom-c" width="220" height="250"></canvas>
+      <canvas id="bloom-c" width="370" height="470"></canvas>
       <h2 class="reward-title" id="reward-title">Day complete!</h2>
       <p class="reward-msg" id="reward-msg">You completed everything — full bloom!</p>
       <button class="btn-new-day" id="btn-new-day">Start a new day</button>
