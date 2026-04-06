@@ -191,6 +191,7 @@ function updateProgress() {
 function triggerCompleteAnimation() {
   const card = document.querySelector('.prog-card');
   const track = document.querySelector('.prog-track');
+  const right = document.querySelector('.right');
 
   $('prog-pct').style.color = '#3a5a3e';
   $('prog-count').style.color = '#5c7d61';
@@ -210,7 +211,7 @@ function triggerCompleteAnimation() {
     }, i * 200);
   }
 
-  // petal drift
+  // petal drift — appended to .right so they fall over the full task section
   const colors = ['#d4c4d8','#c8dbc9','#e8d4c0','#d8c4c8','#c4d4c0','#e0d0c4'];
   for (let i = 0; i < 32; i++) {
     setTimeout(() => {
@@ -218,17 +219,14 @@ function triggerCompleteAnimation() {
       p.className = 'petal-particle';
       const mx=(Math.random()-.5)*40,fx=(Math.random()-.5)*70,ex=(Math.random()-.5)*90;
       const mr=-30+Math.random()*80,fr=mr+(Math.random()-.5)*120,er=fr+(Math.random()-.5)*60;
-      // Make petals fall slower
-      const dur=2.2+Math.random()*0.7,delay=Math.random()*0.5;
+      const dur=2.8+Math.random()*1.2,delay=Math.random()*0.8;
       const size=5+Math.random()*9;
-      // Restrict petals to the width of the progress card (not over the left panel) and shift confetti right
-      const leftOffset = 20; // px
-      p.style.cssText=`width:${size}px;height:${size}px;left:calc(${8+Math.random()*84}% + ${leftOffset}px);top:4px;
+      p.style.cssText=`width:${size}px;height:${size}px;left:${4+Math.random()*92}%;top:0px;
         background:${colors[Math.floor(Math.random()*colors.length)]};
         --mx:${mx}px;--mr:${mr}deg;--fx:${fx}px;--fr:${fr}deg;--ex:${ex}px;--er:${er}deg;
         animation:petal-drift ${dur}s cubic-bezier(.25,.8,.3,1) ${delay}s forwards;
         position:absolute;`;
-      card.appendChild(p);
+      right.appendChild(p);
       setTimeout(() => p.remove(), (dur+delay)*1000+200);
     }, i * 40);
   }
