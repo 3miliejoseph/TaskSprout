@@ -148,8 +148,11 @@ async function loadMemos() {
     memos = raw ? JSON.parse(raw) : [];
     // Load audio blobs from localStorage
     for (const m of memos) {
-      if (m.audioKey && localStorage.getItem(m.audioKey)) {
-        m.audioDataUrl = localStorage.getItem(m.audioKey);
+      if (m.audioKey) {
+        const audioData = localStorage.getItem(m.audioKey);
+        if (audioData) {
+          m.audioDataUrl = audioData;
+        }
       }
     }
   }
@@ -392,8 +395,17 @@ function renderMemos() {
     audio.style.display = 'none';
     let audioUrl = null;
     // For browser: set src to data URL if available
-    if (!window.api && m.audioKey && m.audioDataUrl) {
-      audio.src = m.audioDataUrl;
+    if (!window.api && m.audioKey) {
+      if (m.audioDataUrl) {
+        audio.src = m.audioDataUrl;
+      } else {
+        // Try to load from localStorage
+        const dataUrl = localStorage.getItem(m.audioKey);
+        if (dataUrl) {
+          audio.src = dataUrl;
+          m.audioDataUrl = dataUrl; // Cache it
+        }
+      }
     }
 
     // Play/pause SVG icons
@@ -421,19 +433,41 @@ function renderMemos() {
               try {
                 await audio.play();
               } catch (err) {
+                console.error('Audio play failed:', err);
                 // If play fails, show play icon
                 playBtn.innerHTML = playSVG;
               }
             }
+          } else if (m.audioDataUrl) {
+            // Browser version with data URL
+            audio.src = m.audioDataUrl;
+            audio.load();
+            audio.volume = 0.8;
+            try {
+              await audio.play();
+            } catch (err) {
+              console.error('Audio play failed:', err);
+              playBtn.innerHTML = playSVG;
+            }
           }
+        } catch (err) {
+          console.error('Audio loading failed:', err);
+          playBtn.innerHTML = playSVG;
         } finally {
           isLoading = false;
           playBtn.style.opacity = '';
         }
       } else {
         if (audio.paused) {
-          try { await audio.play(); } catch (err) { playBtn.innerHTML = playSVG; }
-        } else audio.pause();
+          try { 
+            await audio.play(); 
+          } catch (err) { 
+            console.error('Audio play failed:', err);
+            playBtn.innerHTML = playSVG; 
+          }
+        } else {
+          audio.pause();
+        }
       }
     });
     audio.addEventListener('play',()=>{playBtn.innerHTML=pauseSVG;});
@@ -594,7 +628,13 @@ function renderMemos() {
         }
       });
     });
-    row2.append(playBtn, progress, length, volBtn, del);
+    // Only add volume button on desktop
+    const isMobile = window.innerWidth <= 768;
+    if (!isMobile) {
+      row2.append(playBtn, progress, length, volBtn, del);
+    } else {
+      row2.append(playBtn, progress, length, del);
+    }
     // Keep audio element hidden in the card for playback
     card.appendChild(audio);
 
