@@ -414,8 +414,22 @@ function renderMemos() {
     playBtn.innerHTML = playSVG;
     let isLoading = false;
     playBtn.addEventListener('click', async (e) => {
+      e.preventDefault();
       e.stopPropagation();
       if (isLoading) return;
+      
+      // Initialize audio context for mobile browsers
+      if (!window.audioContext) {
+        try {
+          window.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+          if (window.audioContext.state === 'suspended') {
+            await window.audioContext.resume();
+          }
+        } catch (err) {
+          console.warn('AudioContext initialization failed:', err);
+        }
+      }
+      
       if (!audio.src) {
         isLoading = true;
         playBtn.style.opacity = '0.5';
@@ -424,11 +438,13 @@ function renderMemos() {
             const audioArr = await window.api.memos.loadAudio(m.id);
             if (audioArr && audioArr.length) {
               if (audioUrl) URL.revokeObjectURL(audioUrl);
-              const blob = new Blob([new Uint8Array(audioArr)], { type: 'audio/webm' });
+              const blob = new Blob([new Uint8Array(audioArr)], { type: 'audio/webm;codecs=opus' });
               audioUrl = URL.createObjectURL(blob);
               audio.src = audioUrl;
               audio.load();
-              audio.volume = 0.8;
+              // Set volume to 100% on mobile, 80% on desktop
+              const isMobile = window.innerWidth <= 768;
+              audio.volume = isMobile ? 1.0 : 0.8;
               // Audio element will be in the card DOM
               try {
                 await audio.play();
@@ -442,7 +458,9 @@ function renderMemos() {
             // Browser version with data URL
             audio.src = m.audioDataUrl;
             audio.load();
-            audio.volume = 0.8;
+            // Set volume to 100% on mobile, 80% on desktop
+              const isMobile = window.innerWidth <= 768;
+              audio.volume = isMobile ? 1.0 : 0.8;
             try {
               await audio.play();
             } catch (err) {
@@ -469,6 +487,12 @@ function renderMemos() {
           audio.pause();
         }
       }
+    });
+    
+    // Also add touch event for mobile
+    playBtn.addEventListener('touchstart', async (e) => {
+      e.preventDefault();
+      playBtn.click();
     });
     audio.addEventListener('play',()=>{playBtn.innerHTML=pauseSVG;});
     audio.addEventListener('pause',()=>{playBtn.innerHTML=playSVG;});
