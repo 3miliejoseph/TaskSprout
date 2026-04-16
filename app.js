@@ -277,12 +277,36 @@ $('rec-btn').addEventListener('click', async () => {
   if (!recording) {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      mediaRecorder = new MediaRecorder(stream, MediaRecorder.isTypeSupported('audio/webm;codecs=opus') ? { mimeType: 'audio/webm;codecs=opus' } : {});
+      
+      // Safari iOS compatible recording format
+      const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+      let options = {};
+      
+      if (isSafari) {
+        // Safari prefers different formats
+        if (MediaRecorder.isTypeSupported('audio/mp4')) {
+          options = { mimeType: 'audio/mp4' };
+        } else if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
+          options = { mimeType: 'audio/webm;codecs=opus' };
+        }
+      } else {
+        // Other browsers
+        if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
+          options = { mimeType: 'audio/webm;codecs=opus' };
+        }
+      }
+      
+      mediaRecorder = new MediaRecorder(stream, options);
       audioChunks = [];
       mediaRecorder.ondataavailable = e => { if (e.data.size > 0) audioChunks.push(e.data); };
       mediaRecorder.onstop = () => { stream.getTracks().forEach(t => t.stop()); onRecordingStop(); };
       mediaRecorder.start(100);
-    } catch { /* mic not available */ }
+      
+      console.log('Recording started with options:', options);
+    } catch (err) {
+      console.error('Recording failed:', err);
+      /* mic not available */
+    }
 
     recording = true; recSecs = 0;
     $('rec-btn').classList.add('recording');
@@ -305,7 +329,16 @@ async function onRecordingStop() {
 
   let audioKey = null;
   if (audioChunks.length) {
-    const blob = new Blob(audioChunks, { type: 'audio/webm' });
+    // Use the same MIME type as recording
+    const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+    let blobType = 'audio/webm'; // default
+    
+    if (isSafari && mediaRecorder.mimeType) {
+      blobType = mediaRecorder.mimeType;
+    }
+    
+    const blob = new Blob(audioChunks, { type: blobType });
+    console.log('Created blob with type:', blobType);
     if (window.api) {
       const buf  = await blob.arrayBuffer();
       window.api.memos.saveAudio(id, Array.from(new Uint8Array(buf)));
@@ -402,12 +435,16 @@ function renderMemos() {
     if (!window.api && m.audioKey) {
       if (m.audioDataUrl) {
         audio.src = m.audioDataUrl;
+        console.log('Set audio src from memo.audioDataUrl');
       } else {
         // Try to load from localStorage
         const dataUrl = localStorage.getItem(m.audioKey);
         if (dataUrl) {
           audio.src = dataUrl;
           m.audioDataUrl = dataUrl; // Cache it
+          console.log('Set audio src from localStorage');
+        } else {
+          console.warn('No audio data found for key:', m.audioKey);
         }
       }
     }
@@ -572,9 +609,28 @@ function renderMemos() {
       // Trigger the click handler for Safari
       playBtn.click();
     });
-    audio.addEventListener('play',()=>{playBtn.innerHTML=pauseSVG;});
-    audio.addEventListener('pause',()=>{playBtn.innerHTML=playSVG;});
-    audio.addEventListener('ended',()=>{playBtn.innerHTML=playSVG;});
+    audio.addEventListener('play',()=>{
+      console.log('Audio play event fired');
+      playBtn.innerHTML=pauseSVG;
+    });
+    audio.addEventListener('pause',()=>{
+      console.log('Audio pause event fired');
+      playBtn.innerHTML=playSVG;
+    });
+    audio.addEventListener('ended',()=>{
+      console.log('Audio ended event fired');
+      playBtn.innerHTML=playSVG;
+    });
+    audio.addEventListener('error', (e) => {
+      console.error('Audio error event:', e);
+      console.error('Audio error details:', audio.error);
+    });
+    audio.addEventListener('loadeddata', () => {
+      console.log('Audio loaded data event');
+    });
+    audio.addEventListener('canplay', () => {
+      console.log('Audio can play event');
+    });
 
     // Progress bar
     const progress = document.createElement('input');
