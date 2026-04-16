@@ -393,6 +393,10 @@ function renderMemos() {
     // Audio element for playback and volume
     const audio = document.createElement('audio');
     audio.style.display = 'none';
+    // Safari iOS specific attributes
+    audio.preload = 'auto';
+    audio.playsInline = true;
+    audio.muted = false;
     let audioUrl = null;
     // For browser: set src to data URL if available
     if (!window.api && m.audioKey) {
@@ -418,6 +422,10 @@ function renderMemos() {
       e.stopPropagation();
       if (isLoading) return;
       
+      // Safari iOS specific audio initialization
+      const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+      
       // Initialize audio context for mobile browsers
       if (!window.audioContext) {
         try {
@@ -430,6 +438,19 @@ function renderMemos() {
         }
       }
       
+      // For Safari iOS, ensure we have user interaction
+      if (isSafari && isIOS) {
+        // Create a silent audio to "prime" Safari's audio system
+        const silentAudio = new Audio('data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAAAQAEAAEAfAAAQAQABAAgAZGF0YQAAAAA=');
+        silentAudio.volume = 0;
+        try {
+          await silentAudio.play();
+          silentAudio.pause();
+        } catch (err) {
+          console.warn('Silent audio priming failed:', err);
+        }
+      }
+      
       if (!audio.src) {
         isLoading = true;
         playBtn.style.opacity = '0.5';
@@ -438,7 +459,15 @@ function renderMemos() {
             const audioArr = await window.api.memos.loadAudio(m.id);
             if (audioArr && audioArr.length) {
               if (audioUrl) URL.revokeObjectURL(audioUrl);
-              const blob = new Blob([new Uint8Array(audioArr)], { type: 'audio/webm;codecs=opus' });
+              // Try different audio formats for Safari compatibility
+              let blob;
+              const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+              if (isSafari) {
+                // Safari prefers MP4/M4A format
+                blob = new Blob([new Uint8Array(audioArr)], { type: 'audio/mp4' });
+              } else {
+                blob = new Blob([new Uint8Array(audioArr)], { type: 'audio/webm;codecs=opus' });
+              }
               audioUrl = URL.createObjectURL(blob);
               audio.src = audioUrl;
               audio.load();
@@ -447,7 +476,28 @@ function renderMemos() {
               audio.volume = isMobile ? 1.0 : 0.8;
               // Audio element will be in the card DOM
               try {
-                await audio.play();
+                // Multiple playback attempts for Safari
+                let playAttempt = 0;
+                const maxAttempts = 3;
+                
+                const attemptPlay = async () => {
+                  try {
+                    await audio.play();
+                    console.log('Audio playback successful');
+                  } catch (err) {
+                    playAttempt++;
+                    console.warn(`Play attempt ${playAttempt} failed:`, err);
+                    if (playAttempt < maxAttempts) {
+                      // Add delay for Safari
+                      setTimeout(attemptPlay, 100);
+                    } else {
+                      console.error('All playback attempts failed');
+                      playBtn.innerHTML = playSVG;
+                    }
+                  }
+                };
+                
+                await attemptPlay();
               } catch (err) {
                 console.error('Audio play failed:', err);
                 // If play fails, show play icon
@@ -462,7 +512,28 @@ function renderMemos() {
               const isMobile = window.innerWidth <= 768;
               audio.volume = isMobile ? 1.0 : 0.8;
             try {
-              await audio.play();
+              // Multiple playback attempts for Safari
+              let playAttempt = 0;
+              const maxAttempts = 3;
+              
+              const attemptPlay = async () => {
+                try {
+                  await audio.play();
+                  console.log('Audio playback successful');
+                } catch (err) {
+                  playAttempt++;
+                  console.warn(`Play attempt ${playAttempt} failed:`, err);
+                  if (playAttempt < maxAttempts) {
+                    // Add delay for Safari
+                    setTimeout(attemptPlay, 100);
+                  } else {
+                    console.error('All playback attempts failed');
+                    playBtn.innerHTML = playSVG;
+                  }
+                }
+              };
+              
+              await attemptPlay();
             } catch (err) {
               console.error('Audio play failed:', err);
               playBtn.innerHTML = playSVG;
@@ -489,9 +560,16 @@ function renderMemos() {
       }
     });
     
-    // Also add touch event for mobile
+    // Also add touch events for mobile (especially Safari)
     playBtn.addEventListener('touchstart', async (e) => {
       e.preventDefault();
+      e.stopPropagation();
+    });
+    
+    playBtn.addEventListener('touchend', async (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      // Trigger the click handler for Safari
       playBtn.click();
     });
     audio.addEventListener('play',()=>{playBtn.innerHTML=pauseSVG;});
